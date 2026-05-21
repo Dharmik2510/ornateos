@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Segoe UI', system-ui, sans-serif;
+  --color-gold-50: #fdf8eb;
+  --color-gold-100: #f9edc8;
+  --color-gold-200: #f2d98f;
+  --color-gold-400: #d4a84b;
+  --color-gold-500: #b8862e;
+  --color-gold-600: #946b1f;
+  --color-ink-900: #0f1115;
+  --color-ink-800: #171a21;
+  --color-ink-700: #22262f;
+  --color-ink-600: #2e3440;
+}
+
+body {
+  @apply m-0 min-h-screen bg-ink-900 text-stone-100 antialiased;
+}
+
+#root {
+  @apply min-h-screen;
+}
