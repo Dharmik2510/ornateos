@@ -4,6 +4,8 @@ export type TransactionType =
   | 'sale'
   | 'purchase'
   | 'payment'
+  | 'order_placed'
+  | 'order_received'
   | 'unknown'
 
 export interface LedgerRecord {
@@ -17,6 +19,12 @@ export interface LedgerRecord {
   amount?: number | null
   currency?: string
   notes?: string
+  /** For maker orders: ring, necklace, etc. */
+  item_category?: string
+  /** ISO date maker committed to deliver */
+  promised_at?: string | null
+  /** Links to maker_orders.id when receiving */
+  order_id?: string | null
 }
 
 export interface ProcessResult {
@@ -26,6 +34,8 @@ export interface ProcessResult {
   confidence: number
   source: 'voice' | 'image' | 'text'
   receiptUrl?: string
+  /** Matched pending order when receiving from maker */
+  matchedOrderId?: string
 }
 
 export interface TransactionRow {
@@ -44,4 +54,7 @@ export interface DashboardStats {
   pendingMemos: number
   memoExposureGrams: number
   recentCount: number
+  pendingMakerOrders: number
+  overdueMakerOrders: number
+  gramsWithMakers: number
 }

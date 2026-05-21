@@ -5,8 +5,11 @@ import { VoiceRecorder, blobToBase64 } from '../components/VoiceRecorder'
 import { processInput, uploadReceipt } from '../lib/api'
 import { isSupabaseConfigured } from '../lib/supabase'
 
-const EXAMPLE =
-  'Aaje 10 gram gold XYZ ne memo aapyo'
+const EXAMPLES = [
+  'Aaje 10 gram gold XYZ ne memo aapyo',
+  'Ramesh ne 25 gram ring order, 28 tarikh sudhi aapse',
+  'Jayesh thi 24 gram necklace mali gayu',
+]
 
 export function InputPage() {
   const navigate = useNavigate()
@@ -104,9 +107,22 @@ export function InputPage() {
           rows={3}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={EXAMPLE}
+          placeholder={EXAMPLES[0]}
           className="w-full rounded-xl bg-ink-700 border border-ink-600 px-4 py-3 text-stone-100 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-gold-500/40"
         />
+        <p className="text-xs text-stone-500">
+          Try orders:{' '}
+          {EXAMPLES.slice(1).map((ex, i) => (
+            <button
+              key={ex}
+              type="button"
+              className="text-gold-500/80 hover:underline mr-2"
+              onClick={() => setText(ex)}
+            >
+              {i === 0 ? 'place order' : 'receive order'}
+            </button>
+          ))}
+        </p>
         <button
           type="button"
           disabled={loading || !text.trim()}

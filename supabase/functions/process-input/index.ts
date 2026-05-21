@@ -110,7 +110,8 @@ async function structureWithLlm(text: string, source: string) {
         {
           role: 'system',
           content: `You parse informal Indian jewellery wholesale messages (Gujarati/Hindi/English mix) into JSON.
-Return: { "summary": string, "record": { "type": "memo_out"|"memo_return"|"sale"|"purchase"|"payment"|"unknown", "item": string, "weight": number|null, "unit": "gram", "party": string, "action": string, "date": "YYYY-MM-DD", "notes": string }, "confidence": 0-1 }`,
+Return: { "summary": string, "record": { "type": "memo_out"|"memo_return"|"sale"|"purchase"|"payment"|"order_placed"|"order_received"|"unknown", "item": string, "weight": number|null, "unit": "gram"|"kilo", "party": string (maker/customer name), "action": string, "date": "YYYY-MM-DD", "item_category": "ring"|"necklace"|"bracelet"|"earrings"|"bangle"|"chain"|"pendant"|"set"|"other", "promised_at": "YYYY-MM-DD"|null (when maker commits delivery), "notes": string }, "confidence": 0-1 }
+order_placed = wholesaler ordered work from a maker/karigar. order_received = goods received back from maker (mali gayu, received, delivered).`,
         },
         { role: 'user', content: text },
       ],

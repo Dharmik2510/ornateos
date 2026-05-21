@@ -1,8 +1,10 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Gem, LayoutDashboard, Mic } from 'lucide-react'
+import { Gem, LayoutDashboard, Mic, ClipboardList, Users } from 'lucide-react'
 
 const links = [
   { to: '/', label: 'Input', icon: Mic },
+  { to: '/orders', label: 'Orders', icon: ClipboardList },
+  { to: '/makers', label: 'Makers', icon: Users },
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ]
 
@@ -20,7 +22,7 @@ export function Layout() {
                 OrnateOS
               </h1>
               <p className="text-xs text-stone-400">
-                Voice → Ledger for wholesale gold
+                Voice → Ledger · maker order tracking
               </p>
             </div>
           </div>

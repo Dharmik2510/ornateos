@@ -1,6 +1,7 @@
 import { isSupabaseConfigured, supabase } from './supabase'
-import { parseInformalText } from './demoParser'
+import { parseInformalText as parseInformalTextAsync } from './demoParser'
 import type { LedgerRecord, ProcessResult } from '../types/ledger'
+import { orderStats, fetchMakerOrders } from './orders'
 
 export async function processInput(payload: {
   text?: string
@@ -27,7 +28,7 @@ export async function processInput(payload: {
         ? 'Aaje 10 gram gold XYZ ne memo aapyo'
         : '')
 
-  return parseInformalText(text, payload.source, payload.imageUrl)
+  return parseInformalTextAsync(text, payload.source, payload.imageUrl)
 }
 
 export async function getR2UploadUrl(
@@ -56,7 +57,11 @@ export async function uploadReceipt(file: File): Promise<string | undefined> {
   return presign.publicUrl
 }
 
-export function computeDashboard(transactions: { record: LedgerRecord; status: string }[]) {
+export async function computeDashboard(
+  transactions: { record: LedgerRecord; status: string }[],
+) {
+  const orders = await fetchMakerOrders()
+  const oStats = orderStats(orders)
   let inventoryGrams = 0
   let pendingMemos = 0
   let memoExposureGrams = 0
@@ -82,5 +87,8 @@ export function computeDashboard(transactions: { record: LedgerRecord; status: s
     pendingMemos,
     memoExposureGrams: Math.round(memoExposureGrams * 100) / 100,
     recentCount: transactions.length,
+    pendingMakerOrders: oStats.pendingCount,
+    overdueMakerOrders: oStats.overdueCount,
+    gramsWithMakers: oStats.gramsWithMakers,
   }
 }

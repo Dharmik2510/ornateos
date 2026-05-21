@@ -1,8 +1,10 @@
 import { Check, ChevronLeft, Pencil } from 'lucide-react'
-import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { applyProcessResult, isMakerOrderType } from '../lib/orderActions'
 import { insertTransaction } from '../lib/supabase'
 import type { LedgerRecord, ProcessResult } from '../types/ledger'
+import { fetchMakerOrders } from '../lib/orders'
+import { useEffect, useState } from 'react'
 
 export function PreviewPage() {
   const navigate = useNavigate()
@@ -27,6 +29,17 @@ export function PreviewPage() {
 
   const result = initial
   const { record, summary } = result
+  const [pendingMatch, setPendingMatch] = useState<string | null>(
+    result.matchedOrderId ?? null,
+  )
+
+  useEffect(() => {
+    if (record.type !== 'order_received') return
+    void fetchMakerOrders('pending').then((orders) => {
+      const m = orders.find((o) => o.id === result.matchedOrderId)
+      if (m) setPendingMatch(`${m.maker_name} — ${m.weight_ordered}${m.unit} ${m.item_category}`)
+    })
+  }, [record.type, result.matchedOrderId])
 
   async function confirm() {
     setSaving(true)
@@ -34,15 +47,26 @@ export function PreviewPage() {
       const finalRecord = editJson
         ? (JSON.parse(jsonText) as LedgerRecord)
         : record
-      await insertTransaction({
-        status: 'confirmed',
-        source: result.source,
-        raw_input: result.rawText,
-        summary,
-        record: finalRecord,
-        receipt_url: result.receiptUrl ?? null,
-      })
-      navigate('/dashboard', { replace: true })
+      const payload: ProcessResult = { ...result, record: finalRecord }
+
+      if (isMakerOrderType(finalRecord.type)) {
+        await applyProcessResult(payload)
+      } else {
+        await insertTransaction({
+          status: 'confirmed',
+          source: result.source,
+          raw_input: result.rawText,
+          summary,
+          record: finalRecord,
+          receipt_url: result.receiptUrl ?? null,
+        })
+      }
+      navigate(
+        finalRecord.type === 'order_placed' || finalRecord.type === 'order_received'
+          ? '/orders'
+          : '/dashboard',
+        { replace: true },
+      )
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Could not save')
     } finally {
@@ -67,6 +91,17 @@ export function PreviewPage() {
         <p className="text-sm text-stone-400">
           Confidence {(result.confidence * 100).toFixed(0)}% · via {result.source}
         </p>
+        {record.type === 'order_received' && !result.matchedOrderId && (
+          <p className="text-xs text-amber-400">
+            No matching pending order — confirm only if you placed it first.
+          </p>
+        )}
+        {pendingMatch && record.type === 'order_received' && (
+          <p className="text-xs text-emerald-400">Matches pending: {pendingMatch}</p>
+        )}
+        {record.promised_at && record.type === 'order_placed' && (
+          <p className="text-xs text-stone-400">Committed delivery: {record.promised_at}</p>
+        )}
         {result.receiptUrl && (
           <a
             href={result.receiptUrl}

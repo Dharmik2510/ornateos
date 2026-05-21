@@ -1,4 +1,5 @@
-import { AlertTriangle, Package, RefreshCw, Scale } from 'lucide-react'
+import { AlertTriangle, ClipboardList, Package, RefreshCw, Scale } from 'lucide-react'
+import { fetchMakerOrders } from '../lib/orders'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { computeDashboard } from '../lib/api'
@@ -40,7 +41,7 @@ export function DashboardPage() {
     try {
       const data = await fetchTransactions()
       setRows(data)
-      setStats(computeDashboard(data))
+      setStats(await computeDashboard(data))
     } finally {
       setLoading(false)
     }
@@ -49,6 +50,14 @@ export function DashboardPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  const [pendingOrders, setPendingOrders] = useState<
+    Awaited<ReturnType<typeof fetchMakerOrders>>
+  >([])
+
+  useEffect(() => {
+    void fetchMakerOrders('pending').then(setPendingOrders)
+  }, [rows])
 
   const memos = rows.filter(
     (r) =>
@@ -71,7 +80,7 @@ export function DashboardPage() {
       </div>
 
       {stats && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard
             label="Inventory (gold)"
             value={`${stats.inventoryGrams} g`}
@@ -80,9 +89,16 @@ export function DashboardPage() {
             accent="bg-gold-500/20 text-gold-300"
           />
           <StatCard
+            label="Orders with makers"
+            value={String(stats.pendingMakerOrders)}
+            sub={`${stats.gramsWithMakers} g pending · ${stats.overdueMakerOrders} overdue`}
+            icon={ClipboardList}
+            accent="bg-violet-500/20 text-violet-300"
+          />
+          <StatCard
             label="Pending memos"
             value={String(stats.pendingMemos)}
-            sub="Issued, not returned"
+            sub={`${stats.memoExposureGrams} g exposure`}
             icon={Scale}
             accent="bg-blue-500/20 text-blue-300"
           />
@@ -102,6 +118,54 @@ export function DashboardPage() {
           />
         </div>
       )}
+
+      <section className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide">
+            Pending maker orders
+          </h3>
+          <Link to="/orders" className="text-xs text-gold-400 hover:underline">
+            Manage orders →
+          </Link>
+        </div>
+        {pendingOrders.length === 0 ? (
+          <p className="text-stone-500 text-sm py-4 text-center rounded-xl border border-dashed border-ink-600">
+            No orders with makers.{' '}
+            <Link to="/orders" className="text-gold-400 hover:underline">
+              Place an order
+            </Link>
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {pendingOrders.slice(0, 5).map((o) => (
+              <li
+                key={o.id}
+                className="rounded-xl bg-ink-800 border border-ink-600 px-4 py-3 flex justify-between"
+              >
+                <div>
+                  <p className="font-medium text-stone-100">
+                    <Link
+                      to={`/makers/${o.maker_id}`}
+                      className="hover:text-gold-300 hover:underline"
+                    >
+                      {o.maker_name}
+                    </Link>
+                    {' '}
+                    — {o.item_category}
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    Ordered {o.ordered_at}
+                    {o.promised_at ? ` · due ${o.promised_at}` : ''}
+                  </p>
+                </div>
+                <span className="text-sm text-gold-300">
+                  {o.weight_ordered} {o.unit}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="space-y-3">
         <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide">

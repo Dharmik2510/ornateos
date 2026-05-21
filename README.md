@@ -63,7 +63,27 @@ npm run dev
 |--------|-------|---------|
 | Input | `/` | Voice, R2 image upload, text |
 | Preview | `/preview` | AI summary + JSON + confirm |
-| Dashboard | `/dashboard` | Inventory, memos, transactions |
+| Orders | `/orders` | Place/receive orders, due dates |
+| Makers | `/makers` | Per-maker dashboard hub |
+| Maker detail | `/makers/:id` | Stats, overdue, history for one karigar |
+| Dashboard | `/dashboard` | Inventory, memos, pending maker orders |
+
+## Maker order tracking
+
+Wholesalers work with multiple **makers** (karigars). OrnateOS tracks:
+
+- **Who** has your order (maker name)
+- **What** they are making (ring, necklace, bracelet, …)
+- **When** you placed the order
+- **When** they committed to deliver (`promised_at`)
+- **Receive flow** — record actual grams/kilos when goods arrive (updates inventory)
+
+**Voice / text examples:**
+
+- Place: `Ramesh ne 25 gram ring order, 28 tarikh sudhi aapse`
+- Receive: `Jayesh thi 24 gram necklace mali gayu`
+
+Use the **Orders** tab for forms, or Input → Preview → Confirm.
 
 ## Structured record shape
 
