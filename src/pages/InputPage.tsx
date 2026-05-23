@@ -64,12 +64,13 @@ export function InputPage() {
         description={`Add to ${business?.name ?? 'your ledger'} — voice, photo, or text in any language.`}
       />
 
-      <section className="rounded-2xl border border-gold-500/15 bg-ink-800 p-8">
-        <p className="text-center text-sm text-stone-500 mb-6">Voice input</p>
+      <section className="glass-card p-8 relative overflow-hidden">
+        <div className="absolute -top-20 -right-20 size-40 bg-gold-500/10 blur-3xl pointer-events-none" aria-hidden />
+        <p className="text-center text-sm text-gold-400/80 font-medium mb-6">Voice input</p>
         <VoiceRecorder onRecorded={onVoice} disabled={loading} />
       </section>
 
-      <section className="rounded-2xl border border-gold-500/15 bg-ink-800 p-6 space-y-4">
+      <section className="glass-card p-6 space-y-4">
         <p className="text-sm font-medium text-stone-300">Receipt / invoice image</p>
         <input
           ref={fileRef}
@@ -93,7 +94,7 @@ export function InputPage() {
         </button>
       </section>
 
-      <section className="rounded-2xl border border-gold-500/15 bg-ink-800 p-6 space-y-4">
+      <section className="glass-card p-6 space-y-4">
         <label className="text-sm font-medium text-stone-300" htmlFor="msg">
           Type a message
         </label>

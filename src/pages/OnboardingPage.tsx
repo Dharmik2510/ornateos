@@ -43,12 +43,13 @@ export function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-ink-900 px-4 py-12">
-      <div className="w-full max-w-lg rounded-2xl border border-ink-700 bg-ink-800 p-8">
+    <div className="landing-bg min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="landing-grain" aria-hidden />
+      <div className="w-full max-w-lg glass-card p-8 relative z-10">
         <div className="size-12 rounded-xl bg-gold-500/15 flex items-center justify-center mb-6">
           <Building2 className="size-6 text-gold-400" />
         </div>
-        <h1 className="text-2xl font-semibold text-gold-50">Set up your business</h1>
+        <h1 className="font-display text-3xl font-semibold text-gold-50">Set up your business</h1>
         <p className="text-sm text-stone-400 mt-2">
           Hi{session?.profile.full_name ? ` ${session.profile.full_name}` : ''} — tell us
           about your jewellery business. This creates your private workspace.

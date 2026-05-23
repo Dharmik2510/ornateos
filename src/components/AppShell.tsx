@@ -30,9 +30,9 @@ export function AppShell() {
   }
 
   return (
-    <div className="min-h-screen flex bg-ink-900">
+    <div className="min-h-screen flex bg-ink-950">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 flex-col border-r border-ink-700 bg-ink-800/50 shrink-0">
+      <aside className="hidden lg:flex w-64 flex-col border-r border-white/5 bg-ink-900/80 backdrop-blur-xl shrink-0">
         <div className="p-5 border-b border-ink-700">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center">
@@ -50,10 +50,10 @@ export function AppShell() {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition min-h-[44px] ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] ${
                   isActive
-                    ? 'bg-gold-500/15 text-gold-100'
-                    : 'text-stone-400 hover:bg-ink-700 hover:text-stone-200'
+                    ? 'bg-gold-500/15 text-gold-100 shadow-inner shadow-gold-900/20'
+                    : 'text-stone-400 hover:bg-ink-700/80 hover:text-stone-200 hover:translate-x-0.5'
                 }`
               }
             >

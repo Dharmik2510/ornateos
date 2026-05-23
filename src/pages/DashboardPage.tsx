@@ -1,9 +1,10 @@
 import { AlertTriangle, ClipboardList, Package, RefreshCw, Scale } from 'lucide-react'
 import { fetchMakerOrders } from '../lib/orders'
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { PageHeader } from '../components/ui/PageHeader'
+import { ScrollReveal } from '../components/motion/ScrollReveal'
+import { Link } from 'react-router-dom'
 import { computeDashboard } from '../lib/api'
 import { fetchTransactions } from '../lib/supabase'
 import type { DashboardStats, TransactionRow } from '../types/ledger'
@@ -22,8 +23,8 @@ function StatCard({
   accent: string
 }) {
   return (
-    <div className="rounded-2xl border border-ink-600 bg-ink-800 p-5 space-y-2">
-      <div className={`inline-flex p-2 rounded-lg ${accent}`}>
+    <div className="glass-card glass-card-hover p-5 space-y-2 group">
+      <div className={`inline-flex p-2 rounded-lg ${accent} group-hover:scale-110 transition-transform duration-300`}>
         <Icon className="size-5" />
       </div>
       <p className="text-xs text-stone-500 uppercase tracking-wide">{label}</p>
@@ -85,8 +86,21 @@ export function DashboardPage() {
         }
       />
 
+      <ScrollReveal variant="up">
+        <Link
+          to="/record"
+          className="block mb-6 rounded-2xl border border-gold-500/25 bg-gradient-to-r from-gold-500/10 to-transparent p-5 hover:border-gold-500/40 transition-all duration-300 hover:-translate-y-0.5 group"
+        >
+          <p className="text-sm text-gold-400 font-medium">Quick action</p>
+          <p className="text-lg font-semibold text-stone-100 mt-1 group-hover:text-gold-100 transition-colors">
+            Record a memo, sale, or maker order →
+          </p>
+        </Link>
+      </ScrollReveal>
+
       {stats && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <ScrollReveal variant="up" delay={0}>
           <StatCard
             label="Inventory (gold)"
             value={`${stats.inventoryGrams} g`}
@@ -94,6 +108,8 @@ export function DashboardPage() {
             icon={Package}
             accent="bg-gold-500/20 text-gold-300"
           />
+          </ScrollReveal>
+          <ScrollReveal variant="up" delay={80}>
           <StatCard
             label="Orders with makers"
             value={String(stats.pendingMakerOrders)}
@@ -101,6 +117,8 @@ export function DashboardPage() {
             icon={ClipboardList}
             accent="bg-violet-500/20 text-violet-300"
           />
+          </ScrollReveal>
+          <ScrollReveal variant="up" delay={160}>
           <StatCard
             label="Pending memos"
             value={String(stats.pendingMemos)}
@@ -108,6 +126,8 @@ export function DashboardPage() {
             icon={Scale}
             accent="bg-blue-500/20 text-blue-300"
           />
+          </ScrollReveal>
+          <ScrollReveal variant="up" delay={240}>
           <StatCard
             label="Memo exposure"
             value={`${stats.memoExposureGrams} g`}
@@ -115,6 +135,8 @@ export function DashboardPage() {
             icon={AlertTriangle}
             accent="bg-amber-500/20 text-amber-300"
           />
+          </ScrollReveal>
+          <ScrollReveal variant="up" delay={320}>
           <StatCard
             label="Transactions"
             value={String(stats.recentCount)}
@@ -122,6 +144,7 @@ export function DashboardPage() {
             icon={RefreshCw}
             accent="bg-emerald-500/20 text-emerald-300"
           />
+          </ScrollReveal>
         </div>
       )}
 
