@@ -1,104 +1,73 @@
 # OrnateOS
 
-Multilingual **voice + image + text → structured ledger** for jewellery wholesale. Hackathon demo: speak in Gujarati/Hindi/English, upload a receipt to **Cloudflare R2**, confirm AI output, and watch the dashboard update.
+**Multilingual voice-to-ledger SaaS** for jewellery businesses. Each owner gets a private workspace — memos, inventory, maker orders, and per-karigar dashboards.
 
-## Stack
+## Product features
 
-- **React** (Vite + TypeScript + Tailwind)
-- **Supabase** — PostgreSQL transactions + Edge Functions (Whisper, Vision, LLM)
-- **Cloudflare R2** — receipt/invoice image storage (presigned uploads)
+| Feature | Description |
+|---------|-------------|
+| **Multi-tenant** | Sign up → create business → isolated data (Supabase RLS) |
+| **Record** | Voice, receipt photo (R2), or text in Gujarati/Hindi/English |
+| **Maker orders** | Track who has what, order date, promised delivery, receive flow |
+| **Per-maker dashboard** | Pending, overdue, turnaround, history by item type |
+| **Business dashboard** | Inventory, memos, exposure, pending orders |
+| **Receive disambiguation** | Pick the right order when multiple are pending |
 
-## Quick start (demo mode)
+## User flow
 
-Works immediately without cloud keys — uses a local Gujarati-aware parser and `localStorage`.
+1. **Landing** → Sign up / Log in  
+2. **Onboarding** → Business name, type (wholesaler / retailer / manufacturer)  
+3. **App** → Sidebar (desktop) or bottom nav (mobile): Home, Record, Orders, Makers, Settings  
+
+### Demo without Supabase
+
+Any email + password works. Data is stored per business in `localStorage`.
+
+### Production (Supabase)
 
 ```bash
-cd ~/Projects/ornateos
+cp .env.example .env
+# Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+
+npx supabase login
+npx supabase link --project-ref YOUR_REF
+npx supabase db push
+npx supabase functions deploy process-input
+npx supabase functions deploy r2-presign
+```
+
+Enable **Email** provider in Supabase Auth.
+
+## Run locally
+
+```bash
 npm install
 npm run dev
 ```
 
 Open http://localhost:5173
 
-1. Type: `Aaje 10 gram gold XYZ ne memo aapyo` → **Process with AI**
-2. **Confirm** on preview
-3. Open **Dashboard** — inventory and memos update
+## Routes
 
-## Full setup (Supabase + R2 + OpenAI)
+| Route | Access |
+|-------|--------|
+| `/` | Landing |
+| `/signup`, `/login` | Auth |
+| `/onboarding` | New business setup |
+| `/dashboard` | Home |
+| `/record` | Voice / image / text input |
+| `/preview` | Confirm AI result |
+| `/orders` | Maker orders |
+| `/makers`, `/makers/:id` | Maker hub & detail |
+| `/settings` | Business profile |
 
-### 1. Supabase
+## Stack
 
-```bash
-npx supabase login
-npx supabase link --project-ref YOUR_REF
-npx supabase db push
-npx supabase functions deploy process-input
-npx supabase functions deploy r2-presign
-npx supabase secrets set OPENAI_API_KEY=sk-...
-npx supabase secrets set R2_ACCOUNT_ID=...
-npx supabase secrets set R2_ACCESS_KEY_ID=...
-npx supabase secrets set R2_SECRET_ACCESS_KEY=...
-npx supabase secrets set R2_BUCKET_NAME=ornateos-receipts
-npx supabase secrets set R2_PUBLIC_URL=https://your-r2-public-host
-```
-
-Copy `.env.example` → `.env` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
-
-### 2. Cloudflare R2
-
-1. Create bucket `ornateos-receipts`
-2. Enable public access or custom domain → set `R2_PUBLIC_URL`
-3. Create API token with Object Read & Write
-4. Add credentials to Supabase secrets (above)
-
-### 3. Run app
-
-```bash
-npm run dev
-```
-
-## Screens
-
-| Screen | Route | Purpose |
-|--------|-------|---------|
-| Input | `/` | Voice, R2 image upload, text |
-| Preview | `/preview` | AI summary + JSON + confirm |
-| Orders | `/orders` | Place/receive orders, due dates |
-| Makers | `/makers` | Per-maker dashboard hub |
-| Maker detail | `/makers/:id` | Stats, overdue, history for one karigar |
-| Dashboard | `/dashboard` | Inventory, memos, pending maker orders |
-
-## Maker order tracking
-
-Wholesalers work with multiple **makers** (karigars). OrnateOS tracks:
-
-- **Who** has your order (maker name)
-- **What** they are making (ring, necklace, bracelet, …)
-- **When** you placed the order
-- **When** they committed to deliver (`promised_at`)
-- **Receive flow** — record actual grams/kilos when goods arrive (updates inventory)
-
-**Voice / text examples:**
-
-- Place: `Ramesh ne 25 gram ring order, 28 tarikh sudhi aapse`
-- Receive: `Jayesh thi 24 gram necklace mali gayu`
-
-Use the **Orders** tab for forms, or Input → Preview → Confirm.
-
-## Structured record shape
-
-```json
-{
-  "type": "memo_out",
-  "item": "gold",
-  "weight": 10,
-  "unit": "gram",
-  "party": "XYZ",
-  "action": "issued",
-  "date": "2026-05-20"
-}
-```
+- React + Vite + Tailwind  
+- Supabase Auth + Postgres + RLS  
+- Edge Functions (Whisper, Vision, LLM)  
+- Cloudflare R2 (receipts)  
 
 ## License
 
-MIT — hackathon build
+MIT

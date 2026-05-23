@@ -1,5 +1,5 @@
 import type { LedgerRecord, ProcessResult } from '../types/ledger'
-import { fetchMakerOrders, findPendingOrderMatch } from './orders'
+import { fetchMakerOrders, findPendingOrderMatch, findPendingOrderMatches } from './orders'
 import { ITEM_CATEGORIES } from '../types/orders'
 
 function todayIso() {
@@ -129,7 +129,9 @@ export async function parseInformalText(
   let matchedOrderId: string | undefined
   if (type === 'order_received' && party) {
     const pending = await fetchMakerOrders('pending')
-    const match = findPendingOrderMatch(pending, party, itemCategory)
+    const matches = findPendingOrderMatches(pending, party, itemCategory)
+    const match =
+      matches.length === 1 ? matches[0] : findPendingOrderMatch(pending, party, itemCategory)
     if (match) {
       matchedOrderId = match.id
       record.order_id = match.id

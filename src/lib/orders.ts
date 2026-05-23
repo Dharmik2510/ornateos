@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { getActiveBusinessId, requireBusinessId, scopedKey } from './tenant'
 import type {
   Maker,
   MakerOrder,
@@ -7,8 +8,12 @@ import type {
   WeightUnit,
 } from '../types/orders'
 
-const MAKERS_KEY = 'ornateos_makers'
-const ORDERS_KEY = 'ornateos_maker_orders'
+function makersKey(bid: string) {
+  return scopedKey('ornateos_makers', bid)
+}
+function ordersKey(bid: string) {
+  return scopedKey('ornateos_maker_orders', bid)
+}
 
 function loadLocal<T>(key: string): T[] {
   try {
@@ -28,15 +33,18 @@ export function toGrams(weight: number, unit: WeightUnit): number {
 }
 
 export async function fetchMakers(): Promise<Maker[]> {
+  const businessId = requireBusinessId()
+
   if (supabase) {
     const { data, error } = await supabase
       .from('makers')
       .select('*')
+      .eq('business_id', businessId)
       .order('name')
     if (error) throw error
     return (data ?? []) as Maker[]
   }
-  return loadLocal<Maker>(MAKERS_KEY).sort((a, b) =>
+  return loadLocal<Maker>(makersKey(businessId)).sort((a, b) =>
     a.name.localeCompare(b.name),
   )
 }
@@ -45,6 +53,7 @@ export async function upsertMakerByName(
   name: string,
   phone?: string | null,
 ): Promise<Maker> {
+  const businessId = requireBusinessId()
   const trimmed = name.trim()
   const existing = (await fetchMakers()).find(
     (m) => m.name.toLowerCase() === trimmed.toLowerCase(),
@@ -62,58 +71,64 @@ export async function upsertMakerByName(
   if (supabase) {
     const { data, error } = await supabase
       .from('makers')
-      .insert(maker)
+      .insert({ ...maker, business_id: businessId })
       .select()
       .single()
     if (error) throw error
     return data as Maker
   }
 
-  const all = loadLocal<Maker>(MAKERS_KEY)
-  saveLocal(MAKERS_KEY, [...all, maker])
+  const all = loadLocal<Maker>(makersKey(businessId))
+  saveLocal(makersKey(businessId), [...all, maker])
   return maker
 }
 
 export async function fetchMakerOrders(
   status?: MakerOrder['status'],
 ): Promise<MakerOrder[]> {
+  const businessId = requireBusinessId()
+
   if (supabase) {
     let q = supabase
       .from('maker_orders')
       .select('*, makers(name)')
+      .eq('business_id', businessId)
       .order('ordered_at', { ascending: false })
     if (status) q = q.eq('status', status)
     const { data, error } = await q
     if (error) throw error
-    return (data ?? []).map((row: Record<string, unknown>) => {
-      const makers = row.makers as { name: string } | null
-      return {
-        id: row.id as string,
-        maker_id: row.maker_id as string,
-        maker_name: makers?.name ?? 'Unknown',
-        item_category: row.item_category as MakerOrder['item_category'],
-        weight_ordered: Number(row.weight_ordered),
-        unit: row.unit as MakerOrder['unit'],
-        status: row.status as MakerOrder['status'],
-        ordered_at: row.ordered_at as string,
-        promised_at: (row.promised_at as string) ?? null,
-        received_at: (row.received_at as string) ?? null,
-        weight_received:
-          row.weight_received != null ? Number(row.weight_received) : null,
-        notes: (row.notes as string) ?? null,
-        created_at: row.created_at as string,
-      }
-    })
+    return (data ?? []).map(mapOrderRow)
   }
 
-  let rows = loadLocal<MakerOrder>(ORDERS_KEY)
+  let rows = loadLocal<MakerOrder>(ordersKey(businessId))
   if (status) rows = rows.filter((o) => o.status === status)
   return rows.sort(
     (a, b) => new Date(b.ordered_at).getTime() - new Date(a.ordered_at).getTime(),
   )
 }
 
+function mapOrderRow(row: Record<string, unknown>): MakerOrder {
+  const makers = row.makers as { name: string } | null
+  return {
+    id: row.id as string,
+    maker_id: row.maker_id as string,
+    maker_name: makers?.name ?? 'Unknown',
+    item_category: row.item_category as MakerOrder['item_category'],
+    weight_ordered: Number(row.weight_ordered),
+    unit: row.unit as MakerOrder['unit'],
+    status: row.status as MakerOrder['status'],
+    ordered_at: row.ordered_at as string,
+    promised_at: (row.promised_at as string) ?? null,
+    received_at: (row.received_at as string) ?? null,
+    weight_received:
+      row.weight_received != null ? Number(row.weight_received) : null,
+    notes: (row.notes as string) ?? null,
+    created_at: row.created_at as string,
+  }
+}
+
 export async function placeMakerOrder(input: PlaceOrderInput): Promise<MakerOrder> {
+  const businessId = requireBusinessId()
   const maker = input.maker_id
     ? (await fetchMakers()).find((m) => m.id === input.maker_id)
     : await upsertMakerByName(input.maker_name)
@@ -142,6 +157,7 @@ export async function placeMakerOrder(input: PlaceOrderInput): Promise<MakerOrde
       .insert({
         id: order.id,
         maker_id: order.maker_id,
+        business_id: businessId,
         item_category: order.item_category,
         weight_ordered: order.weight_ordered,
         unit: order.unit,
@@ -153,19 +169,18 @@ export async function placeMakerOrder(input: PlaceOrderInput): Promise<MakerOrde
       .select('*, makers(name)')
       .single()
     if (error) throw error
-    const row = data as Record<string, unknown>
-    const makers = row.makers as { name: string }
-    return { ...order, maker_name: makers.name }
+    return mapOrderRow(data as Record<string, unknown>)
   }
 
-  const all = loadLocal<MakerOrder>(ORDERS_KEY)
-  saveLocal(ORDERS_KEY, [order, ...all])
+  const all = loadLocal<MakerOrder>(ordersKey(businessId))
+  saveLocal(ordersKey(businessId), [order, ...all])
   return order
 }
 
 export async function receiveMakerOrder(
   input: ReceiveOrderInput,
 ): Promise<MakerOrder> {
+  const businessId = requireBusinessId()
   const orders = await fetchMakerOrders()
   const order = orders.find((o) => o.id === input.order_id)
   if (!order) throw new Error('Order not found')
@@ -189,25 +204,38 @@ export async function receiveMakerOrder(
         notes: updated.notes,
       })
       .eq('id', order.id)
+      .eq('business_id', businessId)
       .select('*, makers(name)')
       .single()
     if (error) throw error
-    const row = data as Record<string, unknown>
-    const makers = row.makers as { name: string }
-    return {
-      ...updated,
-      maker_name: makers.name,
-      weight_ordered: Number(row.weight_ordered),
-      weight_received: Number(row.weight_received),
-    }
+    return mapOrderRow(data as Record<string, unknown>)
   }
 
-  const all = loadLocal<MakerOrder>(ORDERS_KEY)
+  const all = loadLocal<MakerOrder>(ordersKey(businessId))
   saveLocal(
-    ORDERS_KEY,
+    ordersKey(businessId),
     all.map((o) => (o.id === order.id ? updated : o)),
   )
   return updated
+}
+
+export function findPendingOrderMatches(
+  orders: MakerOrder[],
+  makerName: string,
+  item?: string,
+): MakerOrder[] {
+  const pending = orders.filter((o) => o.status === 'pending')
+  const nameLower = makerName.toLowerCase()
+  let matches = pending.filter((o) => o.maker_name.toLowerCase() === nameLower)
+  if (item) {
+    const byItem = matches.filter(
+      (o) => o.item_category === item || o.item_category.includes(item),
+    )
+    if (byItem.length > 0) matches = byItem
+  }
+  return matches.sort(
+    (a, b) => new Date(b.ordered_at).getTime() - new Date(a.ordered_at).getTime(),
+  )
 }
 
 export function findPendingOrderMatch(
@@ -215,19 +243,8 @@ export function findPendingOrderMatch(
   makerName: string,
   item?: string,
 ): MakerOrder | undefined {
-  const pending = orders.filter((o) => o.status === 'pending')
-  const nameLower = makerName.toLowerCase()
-  const matches = pending.filter((o) => o.maker_name.toLowerCase() === nameLower)
-  if (item) {
-    const byItem = matches.filter(
-      (o) => o.item_category === item || o.item_category.includes(item),
-    )
-    if (byItem.length === 1) return byItem[0]
-  }
-  if (matches.length === 1) return matches[0]
-  return matches.sort(
-    (a, b) => new Date(b.ordered_at).getTime() - new Date(a.ordered_at).getTime(),
-  )[0]
+  const matches = findPendingOrderMatches(orders, makerName, item)
+  return matches.length === 1 ? matches[0] : matches[0]
 }
 
 export function orderStats(orders: MakerOrder[]) {
@@ -245,4 +262,28 @@ export function orderStats(orders: MakerOrder[]) {
     overdueCount: overdue.length,
     gramsWithMakers: Math.round(gramsOut * 100) / 100,
   }
+}
+
+/** Seed demo data for new local businesses */
+export function seedDemoDataIfEmpty(businessId: string) {
+  if (getActiveBusinessId() !== businessId) return
+  if (loadLocal(makersKey(businessId)).length > 0) return
+
+  const makers: Maker[] = [
+    {
+      id: crypto.randomUUID(),
+      name: 'Ramesh',
+      phone: null,
+      notes: null,
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: crypto.randomUUID(),
+      name: 'Jayesh',
+      phone: null,
+      notes: null,
+      created_at: new Date().toISOString(),
+    },
+  ]
+  saveLocal(makersKey(businessId), makers)
 }

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { PageHeader } from '../components/ui/PageHeader'
 import {
   ITEM_CATEGORIES,
   type ItemCategory,
@@ -131,20 +132,15 @@ export function OrdersPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-gold-100">Maker orders</h2>
-          <p className="text-sm text-stone-400">
-            Track who is making what, when you ordered, and when they committed to deliver.
-          </p>
-        </div>
-        <Link
-          to="/"
-          className="text-sm text-gold-400 hover:underline"
-        >
-          Or use voice / text input →
-        </Link>
-      </div>
+      <PageHeader
+        title="Maker orders"
+        description="Track who is making what, when you ordered, and when they committed to deliver."
+        action={
+          <Link to="/record" className="text-sm text-gold-400 hover:underline min-h-[44px] flex items-center">
+            Voice / text input →
+          </Link>
+        }
+      />
 
       <div className="grid sm:grid-cols-3 gap-4">
         <div className="rounded-xl border border-ink-600 bg-ink-800 p-4">

@@ -4,7 +4,7 @@ import { ITEM_CATEGORIES } from '../types/orders'
 import { insertTransaction } from './supabase'
 import {
   fetchMakerOrders,
-  findPendingOrderMatch,
+  findPendingOrderMatches,
   placeMakerOrder,
   receiveMakerOrder,
   toGrams,
@@ -48,14 +48,24 @@ export async function applyProcessResult(result: ProcessResult): Promise<void> {
 
   if (record.type === 'order_received') {
     const pending = await fetchMakerOrders('pending')
-    const match =
-      (record.order_id &&
-        pending.find((o) => o.id === record.order_id)) ||
-      findPendingOrderMatch(
+    let match =
+      record.order_id
+        ? pending.find((o) => o.id === record.order_id)
+        : undefined
+
+    if (!match) {
+      const matches = findPendingOrderMatches(
         pending,
         record.party,
         record.item_category ?? record.item,
       )
+      if (matches.length === 1) match = matches[0]
+      else if (matches.length > 1) {
+        throw new Error(
+          `MULTIPLE_ORDERS:${matches.map((m) => m.id).join(',')}`,
+        )
+      }
+    }
 
     if (!match) {
       throw new Error(

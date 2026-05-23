@@ -16,6 +16,11 @@
 
 body {
   @apply m-0 min-h-screen bg-ink-900 text-stone-100 antialiased;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.safe-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 #root {

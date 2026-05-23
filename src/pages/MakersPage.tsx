@@ -1,6 +1,7 @@
 import { AlertTriangle, ChevronRight, User } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { PageHeader } from '../components/ui/PageHeader'
 import { computeAllMakerStats, type MakerDashboardStats } from '../lib/makerStats'
 import { fetchMakerOrders, fetchMakers } from '../lib/orders'
 
@@ -27,12 +28,10 @@ export function MakersPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-semibold text-gold-100">Makers</h2>
-        <p className="text-sm text-stone-400 mt-1">
-          Per-maker dashboard — pending work, overdue commitments, and history.
-        </p>
-      </div>
+      <PageHeader
+        title="Makers"
+        description="Per-maker dashboard — pending work, overdue commitments, and history."
+      />
 
       {loading && (
         <p className="text-center text-stone-500 py-12">Loading makers…</p>

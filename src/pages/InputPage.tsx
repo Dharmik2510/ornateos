@@ -3,7 +3,8 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { VoiceRecorder, blobToBase64 } from '../components/VoiceRecorder'
 import { processInput, uploadReceipt } from '../lib/api'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
+import { PageHeader } from '../components/ui/PageHeader'
 
 const EXAMPLES = [
   'Aaje 10 gram gold XYZ ne memo aapyo',
@@ -12,6 +13,7 @@ const EXAMPLES = [
 ]
 
 export function InputPage() {
+  const { business } = useAuth()
   const navigate = useNavigate()
   const fileRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState('')
@@ -57,17 +59,10 @@ export function InputPage() {
 
   return (
     <div className="space-y-8">
-      <section className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold text-gold-100">Record a transaction</h2>
-        <p className="text-stone-400 text-sm max-w-md mx-auto">
-          Speak in Gujarati, Hindi, or English — upload a receipt to Cloudflare R2, or type a quick note.
-        </p>
-        {!isSupabaseConfigured && (
-          <p className="text-xs text-amber-400/90 bg-amber-950/40 inline-block px-3 py-1 rounded-full">
-            Demo mode: local parser (add Supabase + R2 env for full AI)
-          </p>
-        )}
-      </section>
+      <PageHeader
+        title="Record"
+        description={`Add to ${business?.name ?? 'your ledger'} — voice, photo, or text in any language.`}
+      />
 
       <section className="rounded-2xl border border-gold-500/15 bg-ink-800 p-8">
         <p className="text-center text-sm text-stone-500 mb-6">Voice input</p>

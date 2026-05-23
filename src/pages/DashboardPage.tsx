@@ -2,6 +2,8 @@ import { AlertTriangle, ClipboardList, Package, RefreshCw, Scale } from 'lucide-
 import { fetchMakerOrders } from '../lib/orders'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { PageHeader } from '../components/ui/PageHeader'
 import { computeDashboard } from '../lib/api'
 import { fetchTransactions } from '../lib/supabase'
 import type { DashboardStats, TransactionRow } from '../types/ledger'
@@ -32,6 +34,7 @@ function StatCard({
 }
 
 export function DashboardPage() {
+  const { business } = useAuth()
   const [rows, setRows] = useState<TransactionRow[]>([])
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -67,8 +70,10 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gold-100">Business dashboard</h2>
+      <PageHeader
+        title={business?.name ?? 'Dashboard'}
+        description="Live inventory, memos, and maker orders for your business."
+        action={
         <button
           type="button"
           onClick={() => void load()}
@@ -77,7 +82,8 @@ export function DashboardPage() {
         >
           <RefreshCw className={`size-5 ${loading ? 'animate-spin' : ''}`} />
         </button>
-      </div>
+        }
+      />
 
       {stats && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -174,7 +180,7 @@ export function DashboardPage() {
         {memos.length === 0 ? (
           <p className="text-stone-500 text-sm py-6 text-center rounded-xl border border-dashed border-ink-600">
             No memos yet.{' '}
-            <Link to="/" className="text-gold-400 hover:underline">
+            <Link to="/record" className="text-gold-400 hover:underline">
               Record your first memo
             </Link>
           </p>

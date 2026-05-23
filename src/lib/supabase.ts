@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { TransactionRow } from '../types/ledger'
+import { getActiveBusinessId, requireBusinessId, scopedKey } from './tenant'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
@@ -10,37 +11,46 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(url!, anonKey!)
   : null
 
-const LOCAL_KEY = 'ornateos_transactions'
+function txKey(bid: string) {
+  return scopedKey('ornateos_transactions', bid)
+}
 
-export function loadLocalTransactions(): TransactionRow[] {
+export function loadLocalTransactions(businessId?: string): TransactionRow[] {
+  const bid = businessId ?? getActiveBusinessId()
+  if (!bid) return []
   try {
-    const raw = localStorage.getItem(LOCAL_KEY)
+    const raw = localStorage.getItem(txKey(bid))
     return raw ? (JSON.parse(raw) as TransactionRow[]) : []
   } catch {
     return []
   }
 }
 
-export function saveLocalTransactions(rows: TransactionRow[]) {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(rows))
+export function saveLocalTransactions(rows: TransactionRow[], businessId?: string) {
+  const bid = businessId ?? requireBusinessId()
+  localStorage.setItem(txKey(bid), JSON.stringify(rows))
 }
 
 export async function fetchTransactions(): Promise<TransactionRow[]> {
+  const businessId = requireBusinessId()
+
   if (supabase) {
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
+      .eq('business_id', businessId)
       .order('created_at', { ascending: false })
-      .limit(50)
+      .limit(100)
     if (error) throw error
     return (data ?? []) as TransactionRow[]
   }
-  return loadLocalTransactions()
+  return loadLocalTransactions(businessId)
 }
 
 export async function insertTransaction(
   row: Omit<TransactionRow, 'id' | 'created_at'>,
 ): Promise<TransactionRow> {
+  const businessId = requireBusinessId()
   const full: TransactionRow = {
     ...row,
     id: crypto.randomUUID(),
@@ -50,14 +60,14 @@ export async function insertTransaction(
   if (supabase) {
     const { data, error } = await supabase
       .from('transactions')
-      .insert(full)
+      .insert({ ...full, business_id: businessId })
       .select()
       .single()
     if (error) throw error
     return data as TransactionRow
   }
 
-  const existing = loadLocalTransactions()
-  saveLocalTransactions([full, ...existing])
+  const existing = loadLocalTransactions(businessId)
+  saveLocalTransactions([full, ...existing], businessId)
   return full
 }
