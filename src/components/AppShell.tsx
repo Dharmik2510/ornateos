@@ -50,15 +50,25 @@ export function AppShell() {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] ${
                   isActive
                     ? 'bg-gold-500/15 text-gold-100 shadow-inner shadow-gold-900/20'
                     : 'text-stone-400 hover:bg-ink-700/80 hover:text-stone-200 hover:translate-x-0.5'
                 }`
               }
             >
-              <Icon className="size-5 shrink-0" />
-              {label}
+              {({ isActive }) => (
+                <>
+                  <span
+                    className={`absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-gold-400 transition-all duration-300 ${
+                      isActive ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0'
+                    }`}
+                    aria-hidden
+                  />
+                  <Icon className="size-5 shrink-0" />
+                  {label}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -103,7 +113,7 @@ export function AppShell() {
           </button>
         </header>
         {menuOpen && (
-          <div className="lg:hidden border-b border-ink-700 bg-ink-800 px-4 py-2 space-y-1">
+          <div className="lg:hidden border-b border-ink-700 bg-ink-800 px-4 py-2 space-y-1 animate-[slide-up_0.22s_ease-out_both]">
             <NavLink
               to="/settings"
               onClick={() => setMenuOpen(false)}

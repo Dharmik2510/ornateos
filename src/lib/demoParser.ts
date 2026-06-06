@@ -1,5 +1,5 @@
 import type { LedgerRecord, ProcessResult } from '../types/ledger'
-import { fetchMakerOrders, findPendingOrderMatch, findPendingOrderMatches } from './orders'
+import { fetchMakerOrders, findPendingOrderMatch } from './orders'
 import { ITEM_CATEGORIES } from '../types/orders'
 
 function todayIso() {
@@ -22,7 +22,7 @@ function detectItemCategory(text: string): string {
 function parsePromisedDate(text: string): string | null {
   const iso = text.match(/(\d{4}-\d{2}-\d{2})/)
   if (iso) return iso[1]
-  const dmy = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/)
+  const dmy = text.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/)
   if (dmy) {
     const y = dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3]
     return `${y}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`
@@ -129,9 +129,9 @@ export async function parseInformalText(
   let matchedOrderId: string | undefined
   if (type === 'order_received' && party) {
     const pending = await fetchMakerOrders('pending')
-    const matches = findPendingOrderMatches(pending, party, itemCategory)
-    const match =
-      matches.length === 1 ? matches[0] : findPendingOrderMatch(pending, party, itemCategory)
+    // Only auto-link when there is exactly one pending match; ambiguous cases
+    // are left for the user to disambiguate on the preview screen.
+    const match = findPendingOrderMatch(pending, party, itemCategory)
     if (match) {
       matchedOrderId = match.id
       record.order_id = match.id

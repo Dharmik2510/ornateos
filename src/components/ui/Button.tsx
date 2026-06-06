@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { Loader2 } from 'lucide-react'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'
 
@@ -15,18 +16,23 @@ const variants: Record<Variant, string> = {
 export function Button({
   variant = 'primary',
   className = '',
+  loading = false,
   children,
+  disabled,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant
+  loading?: boolean
   children: ReactNode
 }) {
   return (
     <button
       type="button"
+      disabled={disabled || loading}
       className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out disabled:opacity-50 disabled:pointer-events-none disabled:transform-none min-h-[44px] cursor-pointer ${variants[variant]} ${className}`}
       {...props}
     >
+      {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
       {children}
     </button>
   )

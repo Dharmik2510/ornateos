@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 
+function prefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+}
+
 export function useScrollReveal<T extends HTMLElement>(threshold = 0.12) {
   const ref = useRef<T>(null)
-  const [visible, setVisible] = useState(false)
+  // When motion is reduced, start visible so nothing is gated behind an animation.
+  const [visible, setVisible] = useState(prefersReducedMotion)
 
   useEffect(() => {
     const el = ref.current
-    if (!el) return
-
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReduced) {
-      setVisible(true)
-      return
-    }
+    if (!el || prefersReducedMotion()) return
 
     const observer = new IntersectionObserver(
       ([entry]) => {

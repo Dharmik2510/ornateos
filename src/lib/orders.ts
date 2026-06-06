@@ -238,13 +238,18 @@ export function findPendingOrderMatches(
   )
 }
 
+/**
+ * Returns the single unambiguous pending match, or `undefined` when there are
+ * zero or multiple candidates. Ambiguous cases are surfaced to the user for an
+ * explicit choice rather than silently picking one.
+ */
 export function findPendingOrderMatch(
   orders: MakerOrder[],
   makerName: string,
   item?: string,
 ): MakerOrder | undefined {
   const matches = findPendingOrderMatches(orders, makerName, item)
-  return matches.length === 1 ? matches[0] : matches[0]
+  return matches.length === 1 ? matches[0] : undefined
 }
 
 export function orderStats(orders: MakerOrder[]) {

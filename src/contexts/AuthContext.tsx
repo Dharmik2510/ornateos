@@ -46,15 +46,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    void refresh().finally(() => setLoading(false))
+    let active = true
+    void (async () => {
+      await refresh()
+      if (active) setLoading(false)
+    })()
 
-    if (!isSupabaseConfigured) return
+    if (!isSupabaseConfigured || !supabase) return () => {
+      active = false
+    }
 
-    if (!supabase) return
     const { data: sub } = supabase.auth.onAuthStateChange(() => {
       void refresh()
     })
-    return () => sub.subscription.unsubscribe()
+    return () => {
+      active = false
+      sub.subscription.unsubscribe()
+    }
   }, [refresh])
 
   const needsOnboarding = Boolean(
@@ -99,6 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// Co-located with the provider by design; the hook is the only sanctioned way
+// to read auth state. Fast-refresh's component-only rule doesn't apply here.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
